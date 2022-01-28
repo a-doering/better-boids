@@ -1,7 +1,13 @@
 import os
 import yaml
-from nose.tools import assert_almost_equal, assert_equal, assert_greater, assert_less
-from boids import Boids
+from nose.tools import (
+    assert_almost_equal,
+    assert_equal,
+    assert_greater,
+    assert_less,
+    assert_sequence_equal,
+)
+from boids import Boid, Boids
 
 
 def test_bad_boids_regression():
@@ -43,3 +49,16 @@ def test_bad_boids_initialisation():
         assert_greater(boid.xv, xv_range[0])
         assert_less(boid.yv, yv_range[1])
         assert_greater(boid.yv, yv_range[0])
+
+
+def test_boid_interaction_fly_to_middle():
+    parameters = {
+        "flock_attraction": 3,
+        "avoidance_radius": 2,
+        "formation_flying_radius": 10,
+        "speed_matching_strength": 0,
+    }
+    boids = Boids(parameters)
+    first = Boid(0, 0, 1, 0, boids)
+    second = Boid(0, 5, 0, 0, boids)
+    assert_sequence_equal(first.interaction(second), [0.0, 15.0])
