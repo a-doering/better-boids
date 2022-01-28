@@ -32,7 +32,8 @@ def test_bad_boids_initialisation():
         xv_range=xv_range,
         yv_range=yv_range,
     )
-    assert_equal(len(boids.boids), 15)
+    assert_equal(len(boids.boids), boid_count)
+    assert_equal(boids.boid_count, boid_count)
     for boid in boids.boids:
         assert_less(boid.x, x_range[1])
         assert_greater(boid.x, x_range[0])
