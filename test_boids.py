@@ -69,7 +69,7 @@ def test_boid_interaction_fly_to_middle():
     boids = Boids(parameters)
     first = Boid(0, 0, 1, 0, boids)
     second = Boid(0, 5, 0, 0, boids)
-    assert_array_equal(first.interaction(second), [0.0, 15.0])
+    assert_array_equal(first.interaction_single(second), [0.0, 15.0])
 
 
 def test_boid_interaction_avoidance():
@@ -82,7 +82,7 @@ def test_boid_interaction_avoidance():
     boids = Boids(parameters)
     first = Boid(0, 0, 1, 0, boids)
     second = Boid(0, 5, 0, 0, boids)
-    assert_array_equal(first.interaction(second), [0.0, 10.0])
+    assert_array_equal(first.interaction_single(second), [0.0, 10.0])
 
 
 def test_boid_interaction_formation():
@@ -95,4 +95,4 @@ def test_boid_interaction_formation():
     boids = Boids(parameters)
     first = Boid(0, 0, 0.0, 0, boids)
     second = Boid(0, 5, 11.0, 0, boids)
-    assert_array_equal(first.interaction(second), [11.0 * 7.0, 15.0])
+    assert_array_equal(first.interaction_single(second), [11.0 * 7.0, 15.0])
