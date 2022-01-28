@@ -11,10 +11,11 @@ def test_bad_boids_regression():
     boids = Boids.with_default_parameters(boid_count)
     boids.initialise_from_data(regression_data["before"])
     boids.update()
-    current_data = (boids.xs, boids.ys, boids.xvs, boids.yvs)
-    for after, before in zip(regression_data["after"], current_data):
-        for after_value, before_value in zip(after, before):
-            assert_almost_equal(after_value, before_value, delta=0.01)
+    for index, boid in enumerate(boids.boids):
+        assert_almost_equal(boid.x, regression_data["after"][0][index], delta=0.01)
+        assert_almost_equal(boid.y, regression_data["after"][1][index], delta=0.01)
+        assert_almost_equal(boid.xv, regression_data["after"][2][index], delta=0.01)
+        assert_almost_equal(boid.yv, regression_data["after"][3][index], delta=0.01)
 
 
 def test_bad_boids_initialisation():
@@ -31,16 +32,13 @@ def test_bad_boids_initialisation():
         xv_range=xv_range,
         yv_range=yv_range,
     )
-    assert_equal(len(boids.xs), boid_count)
-    for x in boids.xs:
-        assert_less(x, x_range[1])
-        assert_greater(x, x_range[0])
-    for y in boids.ys:
-        assert_less(y, y_range[1])
-        assert_greater(y, y_range[0])
-    for xv in boids.xvs:
-        assert_less(xv, xv_range[1])
-        assert_greater(xv, xv_range[0])
-    for yv in boids.yvs:
-        assert_less(yv, yv_range[1])
-        assert_greater(yv, yv_range[0])
+    assert_equal(len(boids.boids), 15)
+    for boid in boids.boids:
+        assert_less(boid.x, x_range[1])
+        assert_greater(boid.x, x_range[0])
+        assert_less(boid.y, y_range[1])
+        assert_greater(boid.y, y_range[0])
+        assert_less(boid.xv, xv_range[1])
+        assert_greater(boid.xv, xv_range[0])
+        assert_less(boid.yv, yv_range[1])
+        assert_greater(boid.yv, yv_range[0])
