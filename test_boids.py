@@ -5,8 +5,8 @@ from nose.tools import (
     assert_equal,
     assert_greater,
     assert_less,
-    assert_sequence_equal,
 )
+from numpy.testing import assert_array_equal
 from boids import Boid, Boids
 
 
@@ -18,10 +18,18 @@ def test_bad_boids_regression():
     boids.initialise_from_data(regression_data["before"])
     boids.update()
     for index, boid in enumerate(boids.boids):
-        assert_almost_equal(boid.x, regression_data["after"][0][index], delta=0.01)
-        assert_almost_equal(boid.y, regression_data["after"][1][index], delta=0.01)
-        assert_almost_equal(boid.xv, regression_data["after"][2][index], delta=0.01)
-        assert_almost_equal(boid.yv, regression_data["after"][3][index], delta=0.01)
+        assert_almost_equal(
+            boid.position[0], regression_data["after"][0][index], delta=0.01
+        )
+        assert_almost_equal(
+            boid.position[1], regression_data["after"][1][index], delta=0.01
+        )
+        assert_almost_equal(
+            boid.velocity[0], regression_data["after"][2][index], delta=0.01
+        )
+        assert_almost_equal(
+            boid.velocity[1], regression_data["after"][3][index], delta=0.01
+        )
 
 
 def test_bad_boids_initialisation():
@@ -41,14 +49,14 @@ def test_bad_boids_initialisation():
     assert_equal(len(boids.boids), boid_count)
     assert_equal(boids.boid_count, boid_count)
     for boid in boids.boids:
-        assert_less(boid.x, x_range[1])
-        assert_greater(boid.x, x_range[0])
-        assert_less(boid.y, y_range[1])
-        assert_greater(boid.y, y_range[0])
-        assert_less(boid.xv, xv_range[1])
-        assert_greater(boid.xv, xv_range[0])
-        assert_less(boid.yv, yv_range[1])
-        assert_greater(boid.yv, yv_range[0])
+        assert_less(boid.position[0], x_range[1])
+        assert_greater(boid.position[0], x_range[0])
+        assert_less(boid.position[1], y_range[1])
+        assert_greater(boid.position[1], y_range[0])
+        assert_less(boid.velocity[0], xv_range[1])
+        assert_greater(boid.velocity[0], xv_range[0])
+        assert_less(boid.velocity[1], yv_range[1])
+        assert_greater(boid.velocity[1], yv_range[0])
 
 
 def test_boid_interaction_fly_to_middle():
@@ -61,7 +69,7 @@ def test_boid_interaction_fly_to_middle():
     boids = Boids(parameters)
     first = Boid(0, 0, 1, 0, boids)
     second = Boid(0, 5, 0, 0, boids)
-    assert_sequence_equal(first.interaction(second), [0.0, 15.0])
+    assert_array_equal(first.interaction(second), [0.0, 15.0])
 
 
 def test_boid_interaction_avoidance():
@@ -74,7 +82,7 @@ def test_boid_interaction_avoidance():
     boids = Boids(parameters)
     first = Boid(0, 0, 1, 0, boids)
     second = Boid(0, 5, 0, 0, boids)
-    assert_sequence_equal(first.interaction(second), [0.0, 10.0])
+    assert_array_equal(first.interaction(second), [0.0, 10.0])
 
 
 def test_boid_interaction_formation():
@@ -87,4 +95,4 @@ def test_boid_interaction_formation():
     boids = Boids(parameters)
     first = Boid(0, 0, 0.0, 0, boids)
     second = Boid(0, 5, 11.0, 0, boids)
-    assert_sequence_equal(first.interaction(second), [11.0 * 7.0, 15.0])
+    assert_array_equal(first.interaction(second), [11.0 * 7.0, 15.0])
