@@ -7,17 +7,17 @@ from nose.tools import (
     assert_less,
 )
 from numpy.testing import assert_array_equal
-from boids import Boid, Boids
+from boids import Boid, Flock
 
 
 def test_bad_boids_regression():
     with open(os.path.join(os.path.dirname(__file__), "fixture.yml")) as fixture_file:
         regression_data = yaml.safe_load(fixture_file)
     boid_count = 50
-    boids = Boids.with_default_parameters(boid_count)
-    boids.initialise_from_data(regression_data["before"])
-    boids.update()
-    for index, boid in enumerate(boids.boids):
+    flock = Flock.with_default_parameters(boid_count)
+    flock.initialise_from_data(regression_data["before"])
+    flock.update()
+    for index, boid in enumerate(flock.boids):
         assert_almost_equal(
             boid.position[0], regression_data["after"][0][index], delta=0.01
         )
@@ -34,21 +34,21 @@ def test_bad_boids_regression():
 
 def test_bad_boids_initialisation():
     boid_count = 15
-    boids = Boids.with_default_parameters(boid_count)
+    flock = Flock.with_default_parameters(boid_count)
     x_range = (-450, 50.0)
     y_range = (300.0, 600.0)
     xv_range = (0, 10.0)
     yv_range = (-20.0, 20.0)
-    boids.initialise_random(
+    flock.initialise_random(
         boid_count,
         x_range=x_range,
         y_range=y_range,
         xv_range=xv_range,
         yv_range=yv_range,
     )
-    assert_equal(len(boids.boids), boid_count)
-    assert_equal(boids.boid_count, boid_count)
-    for boid in boids.boids:
+    assert_equal(len(flock.boids), boid_count)
+    assert_equal(flock.boid_count, boid_count)
+    for boid in flock.boids:
         assert_less(boid.position[0], x_range[1])
         assert_greater(boid.position[0], x_range[0])
         assert_less(boid.position[1], y_range[1])
@@ -66,9 +66,9 @@ def test_boid_interaction_fly_to_middle():
         "formation_flying_radius": 10,
         "speed_matching_strength": 0,
     }
-    boids = Boids(parameters)
-    first = Boid(0, 0, 1, 0, boids)
-    second = Boid(0, 5, 0, 0, boids)
+    flock = Flock(parameters)
+    first = Boid(0, 0, 1, 0, flock)
+    second = Boid(0, 5, 0, 0, flock)
     assert_array_equal(first.interaction(second), [0.0, 15.0])
 
 
@@ -79,9 +79,9 @@ def test_boid_interaction_avoidance():
         "formation_flying_radius": 10,
         "speed_matching_strength": 0,
     }
-    boids = Boids(parameters)
-    first = Boid(0, 0, 1, 0, boids)
-    second = Boid(0, 5, 0, 0, boids)
+    flock = Flock(parameters)
+    first = Boid(0, 0, 1, 0, flock)
+    second = Boid(0, 5, 0, 0, flock)
     assert_array_equal(first.interaction(second), [0.0, 10.0])
 
 
@@ -92,7 +92,7 @@ def test_boid_interaction_formation():
         "formation_flying_radius": 10,
         "speed_matching_strength": 7,
     }
-    boids = Boids(parameters)
-    first = Boid(0, 0, 0.0, 0, boids)
-    second = Boid(0, 5, 11.0, 0, boids)
+    flock = Flock(parameters)
+    first = Boid(0, 0, 0.0, 0, flock)
+    second = Boid(0, 5, 11.0, 0, flock)
     assert_array_equal(first.interaction(second), [11.0 * 7.0, 15.0])
