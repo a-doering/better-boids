@@ -2,64 +2,98 @@
 A deliberately bad implementation of [Boids](http://dl.acm.org/citation.cfm?doid=37401.37406)
 for use as an exercise on refactoring.
 """
-
-from matplotlib import pyplot as plt
-from matplotlib import animation
+import numpy as np
 import random
-import yaml
-
-# Deliberately terrible code for teaching purposes
-
-boids_x=[random.uniform(-450,50.0) for x in range(50)]
-boids_y=[random.uniform(300.0,600.0) for x in range(50)]
-boid_x_velocities=[random.uniform(0,10.0) for x in range(50)]
-boid_y_velocities=[random.uniform(-20.0,20.0) for x in range(50)]
-boids=(boids_x,boids_y,boid_x_velocities,boid_y_velocities)
-
-def updateBoids(boids):
-    xs,ys,xvs,yvs=boids
-    deltaXVs=[0]*len(xs)
-    deltaYVs=[0]*len(xs)
-    # Fly towards the middle
-    for i in range(len(xs)):
-        for j in range(len(xs)):
-            deltaXVs[i]=deltaXVs[i]+(xs[j]-xs[i])*0.01/len(xs)
-    for i in range(len(xs)):
-        for j in range(len(xs)):
-            deltaYVs[i]=deltaYVs[i]+(ys[j]-ys[i])*0.01/len(xs)
-    # Fly away from nearby boids
-    for i in range(len(xs)):
-        for j in range(len(xs)):
-            if (xs[j]-xs[i])**2 + (ys[j]-ys[i])**2 < 100:
-                deltaXVs[i]=deltaXVs[i]+(xs[i]-xs[j])
-                deltaYVs[i]=deltaYVs[i]+(ys[i]-ys[j])
-    # Try to match speed with nearby boids
-    for i in range(len(xs)):
-        for j in range(len(xs)):
-            if (xs[j]-xs[i])**2 + (ys[j]-ys[i])**2 < 10000:
-                deltaXVs[i]=deltaXVs[i]+(xvs[j]-xvs[i])*0.125/len(xs)
-                deltaYVs[i]=deltaYVs[i]+(yvs[j]-yvs[i])*0.125/len(xs)
-    # Update velocities
-    for i in range(len(xs)):
-        xvs[i]=xvs[i]+deltaXVs[i]
-        yvs[i]=yvs[i]+deltaYVs[i]
-    # Move according to velocities
-    for i in range(len(xs)):
-        xs[i]=xs[i]+xvs[i]
-        ys[i]=ys[i]+yvs[i]
 
 
-figure=plt.figure()
-axes=plt.axes(xlim=(-500,1500), ylim=(-500,1500))
-scatter=axes.scatter(boids[0],boids[1])
+class Boid:
+    def __init__(self, x, y, vx, vy, owner):
+        self.position = np.array([x, y])
+        self.velocity = np.array([vx, vy])
+        self.owner = owner
 
-def ANIMATE(frame):
-    updateBoids(boids)
-    scatter.set_offsets(list(zip(boids[0],boids[1])))
+    def interaction(self, other):
+        """Compute velocity changes due to one other boid"""
+
+        delta_v = np.array([0.0, 0.0])
+        separation = other.position - self.position
+        separation_square = separation.dot(separation)
+
+        # Fly towards the middle
+        flock_attraction = self.owner.parameters["flock_attraction"]
+        delta_v += separation * flock_attraction
+
+        # Fly away from nearby boids
+        avoidance_radius = self.owner.parameters["avoidance_radius"]
+        if separation_square < avoidance_radius**2:
+            delta_v -= separation
+
+        # Try to match speed with nearby boids
+
+        formation_flying_radius = self.owner.parameters["formation_flying_radius"]
+        speed_matching_strength = self.owner.parameters["speed_matching_strength"]
+        if separation_square < formation_flying_radius**2:
+            delta_v += (other.velocity - self.velocity) * speed_matching_strength
+
+        return delta_v
+
+    def move(self, delta_v):
+        """Update the position and velocity of the Boid"""
+        self.velocity += delta_v
+        self.position += self.velocity
 
 
-anim = animation.FuncAnimation(figure, ANIMATE,
-                               frames=50, interval=50)
+class Flock:
+    def __init__(self, parameters):
+        self.parameters = parameters
+        self.boids = []
 
-if __name__ == "__main__":
-    plt.show()
+    @classmethod
+    def with_default_parameters(cls, boid_count):
+        parameters = {
+            "flock_attraction": 0.1 / boid_count,
+            "avoidance_radius": 10,
+            "formation_flying_radius": 100,
+            "speed_matching_strength": 0.125 / boid_count,
+        }
+        return cls(parameters)
+
+    def __len__(self):
+        return len(self.boids)
+
+    @property
+    def boid_count(self):
+        return len(self.boids)
+
+    def initialize_random(
+        self,
+        boid_count,
+        x_range=(-450, 50.0),
+        y_range=(300.0, 600.0),
+        xv_range=(0, 10.0),
+        yv_range=(-20.0, 20.0),
+        random_seed=None,
+    ):
+        rng = random.Random(random_seed)
+        self.boids = [
+            Boid(
+                rng.uniform(*x_range),
+                rng.uniform(*y_range),
+                rng.uniform(*xv_range),
+                rng.uniform(*yv_range),
+                self,
+            )
+            for _ in range(boid_count)
+        ]
+
+    def initialize_from_data(self, data):
+        self.boids = [Boid(x, y, xv, yv, self) for x, y, xv, yv in zip(*data)]
+
+    def update(self):
+        delta_vs = np.zeros((self.boid_count, 2))
+        for i, me in enumerate(self.boids):
+            for other in self.boids:
+                delta_vs[i, :] += me.interaction(other)
+
+        for i, me in enumerate(self.boids):
+            me.move(delta_vs[i, :])
